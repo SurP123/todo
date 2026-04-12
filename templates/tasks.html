@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Задачи</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f5f3;
+            min-height: 100vh;
+            color: #1a1a18;
+        }
+
+        .page {
+            max-width: 560px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 2.5rem;
+        }
+
+        .header h1 {
+            font-size: 22px;
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .header p {
+            font-size: 14px;
+            color: #888780;
+        }
+
+        .logout-btn {
+            background: none;
+            border: 0.5px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 6px 14px;
+            font-size: 13px;
+            color: #888780;
+            cursor: pointer;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            border-color: rgba(0,0,0,0.3);
+            color: #1a1a18;
+        }
+
+        .add-form {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .add-form input {
+            flex: 1;
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 10px 14px;
+            font-size: 15px;
+            color: #1a1a18;
+            font-family: inherit;
+            outline: none;
+        }
+
+        .add-form input::placeholder {
+            color: #b4b2a9;
+        }
+
+        .add-form input:focus {
+            border-color: rgba(0,0,0,0.4);
+        }
+
+        .add-form button {
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 10px 18px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #1a1a18;
+            cursor: pointer;
+            white-space: nowrap;
+            font-family: inherit;
+        }
+
+        .add-form button:hover { background: #f5f5f3; }
+        .add-form button:active { transform: scale(0.98); }
+
+        .section-label {
+            font-size: 12px;
+            color: #b4b2a9;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .task-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 2rem;
+        }
+
+        .task {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: #fff;
+            border: 0.5px solid rgba(0,0,0,0.15);
+            border-radius: 8px;
+            padding: 14px 16px;
+        }
+
+        .task.done .task-text {
+            text-decoration: line-through;
+            color: #b4b2a9;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            border: 0.5px solid rgba(0,0,0,0.3);
+            border-radius: 50%;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .task.done .checkbox {
+            background: #eaf3de;
+            border-color: #97c459;
+        }
+
+        .check-icon {
+            display: none;
+            width: 10px;
+            height: 10px;
+        }
+
+        .task.done .check-icon { display: block; }
+
+        .task-text {
+            flex: 1;
+            font-size: 15px;
+            color: #1a1a18;
+        }
+
+        .delete-btn {
+            font-size: 18px;
+            color: #b4b2a9;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0 2px;
+            line-height: 1;
+            font-family: inherit;
+        }
+
+        .delete-btn:hover { color: #e24b4a; }
+
+        .empty {
+            text-align: center;
+            padding: 3rem 0;
+            color: #b4b2a9;
+            font-size: 14px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 12px;
+        }
+
+        .stat {
+            flex: 1;
+            background: #eeede8;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+
+        .stat-num {
+            font-size: 24px;
+            font-weight: 500;
+            color: #1a1a18;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888780;
+            margin-top: 2px;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="header">
+        <div>
+            <h1>Задачи</h1>
+            <p id="date-label"></p>
+        </div>
+        <button class="logout-btn" onclick="logout()">Выйти</button>
+    </div>
+
+    <div class="add-form">
+        <input type="text" id="task-input" placeholder="Добавить задачу..." />
+        <button onclick="addTask()">Добавить</button>
+    </div>
+
+    <div>
+        <div class="section-label">К выполнению</div>
+        <div class="task-list" id="active-list"></div>
+    </div>
+
+    <div>
+        <div class="section-label">Выполнено</div>
+        <div class="task-list" id="done-list"></div>
+    </div>
+
+    <div class="stats">
+        <div class="stat">
+            <div class="stat-num" id="stat-total">0</div>
+            <div class="stat-label">Всего задач</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="stat-done">0</div>
+            <div class="stat-label">Выполнено</div>
+        </div>
+        <div class="stat">
+            <div class="stat-num" id="stat-left">0</div>
+            <div class="stat-label">Осталось</div>
+        </div>
+    </div>
+
+</div>
+<script>
+    const days = ['воскресенье','понедельник','вторник','среда','четверг','пятница','суббота'];
+    const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+    const now = new Date();
+    document.getElementById('date-label').textContent =
+        days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
+
+    const userID = localStorage.getItem('userID');
+    if (!userID) window.location.href = '/';
+
+    async function loadTasks() {
+        const res = await fetch(`/api/tasks?user_id=${userID}`);
+        const tasks = await res.json();
+
+        const activeList = document.getElementById('active-list');
+        const doneList = document.getElementById('done-list');
+
+        activeList.innerHTML = '';
+        doneList.innerHTML = '';
+
+        let total = tasks.length;
+        let done = 0;
+
+        tasks.forEach(t => {
+            if (t.Done) done++;
+            const div = createTaskEl(t);
+            t.Done ? doneList.appendChild(div) : activeList.appendChild(div);
+        });
+
+        if (total - done === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = 'Нет активных задач';
+            activeList.appendChild(empty);
+        }
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-done').textContent = done;
+        document.getElementById('stat-left').textContent = total - done;
+    }
+
+    function createTaskEl(t) {
+        const div = document.createElement('div');
+        div.className = 'task' + (t.Done ? ' done' : '');
+        div.innerHTML = `
+            <div class="checkbox">
+                ${t.Done ? '<svg class="check-icon" viewBox="0 0 10 10" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5" stroke="#3b6d11" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>' : ''}
+            </div>
+            <span class="task-text">${t.Text}</span>
+            <button class="delete-btn" onclick="deleteTask(${t.ID})">×</button>
+        `;
+        div.querySelector('.checkbox').onclick = () => toggleTask(t.ID);
+        return div;
+    }
+
+    async function addTask() {
+        const input = document.getElementById('task-input');
+        const text = input.value.trim();
+        if (!text) return;
+        await fetch('/api/tasks', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Text: text, Done: false, UserID: parseInt(userID) })
+        });
+        input.value = '';
+        loadTasks();
+    }
+
+    async function toggleTask(id) {
+        await fetch(`/api/tasks?id=${id}&user_id=${userID}`, { method: 'PUT' });
+        loadTasks();
+    }
+
+    async function deleteTask(id) {
+        await fetch(`/api/tasks?id=${id}&user_id=${userID}`, { method: 'DELETE' });
+        loadTasks();
+    }
+
+    function logout() {
+        localStorage.removeItem('userID');
+        window.location.href = '/';
+    }
+
+    document.getElementById('task-input').addEventListener('keydown', e => {
+        if (e.key === 'Enter') addTask();
+    });
+
+    loadTasks();
+</script>
+</body>
+</html>
