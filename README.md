@@ -4,7 +4,7 @@
 
 ## Технологии
 
-- Go 1.22
+- Go 1.26.2
 - SQLite (database/sql + go-sqlite3)
 - bcrypt для хеширования паролей
 - Стандартная библиотека net/http
@@ -25,8 +25,8 @@
 
 Клонируй репозиторий:
 
-git clone https://github.com/твой-username/todo-app.git
-cd todo-app
+git clone https://github.com/SurP123/todo.git
+cd todo
 
 Установи зависимости:
 
@@ -37,18 +37,3 @@ go mod tidy
 go run .
 
 Открой в браузере: http://localhost:8181
-
-## Структура проекта
-todo-app/
-├── main.go              точка входа, регистрация маршрутов
-├── handlers/
-│   ├── init.go          инициализация хранилищ
-│   ├── auth.go          регистрация и вход
-│   └── tasks.go         CRUD задач
-├── storage/
-│   ├── db.go            подключение к SQLite, создание таблиц
-│   ├── storage.go       хранилище задач
-│   └── users.go         хранилище пользователей
-└── templates/
-├── index.html        страница входа и регистрации
-└── tasks.html        страница задач
