@@ -8,6 +8,7 @@
 - SQLite (database/sql + go-sqlite3)
 - bcrypt для хеширования паролей
 - Стандартная библиотека net/http
+- JWT
 - Vanilla JS на фронтенде
 
 ## Возможности

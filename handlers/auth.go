@@ -43,8 +43,13 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := CreateJWT(id)
+	if err != nil {
+		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"userID": id})
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
@@ -66,6 +71,11 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	token, err := CreateJWT(user.Id)
+	if err != nil {
+		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]int{"userID": user.Id})
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }

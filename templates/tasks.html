@@ -251,11 +251,13 @@
     document.getElementById('date-label').textContent =
         days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()];
 
-    const userID = localStorage.getItem('userID');
-    if (!userID) window.location.href = '/';
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/';
 
     async function loadTasks() {
-        const res = await fetch(`/api/tasks?user_id=${userID}`);
+        const res = await fetch('/api/tasks', {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         const tasks = await res.json();
 
         const activeList = document.getElementById('active-list');
@@ -305,25 +307,34 @@
         if (!text) return;
         await fetch('/api/tasks', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ Text: text, Done: false, UserID: parseInt(userID) })
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ Text: text, Done: false })
         });
         input.value = '';
         loadTasks();
     }
 
     async function toggleTask(id) {
-        await fetch(`/api/tasks?id=${id}&user_id=${userID}`, { method: 'PUT' });
+        await fetch(`/api/tasks?id=${id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         loadTasks();
     }
 
     async function deleteTask(id) {
-        await fetch(`/api/tasks?id=${id}&user_id=${userID}`, { method: 'DELETE' });
+        await fetch(`/api/tasks?id=${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
         loadTasks();
     }
 
     function logout() {
-        localStorage.removeItem('userID');
+        localStorage.removeItem('token');
         window.location.href = '/';
     }
 

@@ -4,13 +4,22 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
+	"strings"
 	"todo/storage"
 )
 
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := strconv.Atoi(r.URL.Query().Get("user_id"))
-	if err != nil || userID == 0 {
-		http.Error(w, "не указан user_id", http.StatusBadRequest)
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "нет токена", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	userID, err := ParseJWT(tokenStr)
+	if err != nil {
+		http.Error(w, "невалидный токен", http.StatusUnauthorized)
 		return
 	}
 
@@ -20,17 +29,25 @@ func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "нет токена", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	userID, err := ParseJWT(tokenStr)
+	if err != nil {
+		http.Error(w, "невалидный токен", http.StatusUnauthorized)
+		return
+	}
 	var newTask storage.Task
 	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	if newTask.UserID == 0 {
-		http.Error(w, "не указан UserID", http.StatusBadRequest)
-		return
-	}
-
+	newTask.UserID = userID
 	id := store.Add(newTask)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
@@ -39,20 +56,27 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	userIDStr := r.URL.Query().Get("user_id")
 
-	if idStr == "" || userIDStr == "" {
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "нет токена", http.StatusUnauthorized)
+		return
+	}
+
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	userID, err := ParseJWT(tokenStr)
+	if err != nil {
+		http.Error(w, "невалидный токен", http.StatusUnauthorized)
+		return
+	}
+
+	if idStr == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -67,20 +91,26 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	userIDStr := r.URL.Query().Get("user_id")
+	authHeader := r.Header.Get("Authorization")
+	if authHeader == "" {
+		http.Error(w, "нет токена", http.StatusUnauthorized)
+		return
+	}
 
-	if idStr == "" || userIDStr == "" {
+	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
+
+	userID, err := ParseJWT(tokenStr)
+	if err != nil {
+		http.Error(w, "невалидный токен", http.StatusUnauthorized)
+		return
+	}
+
+	if idStr == "" {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		return
-	}
-
-	userID, err := strconv.Atoi(userIDStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
