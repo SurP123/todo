@@ -4,44 +4,18 @@ import (
 	"encoding/json"
 	"net/http"
 	"strconv"
-	"strings"
 	"todo/storage"
 )
 
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "нет токена", http.StatusUnauthorized)
-		return
-	}
-
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	userID, err := ParseJWT(tokenStr)
-	if err != nil {
-		http.Error(w, "невалидный токен", http.StatusUnauthorized)
-		return
-	}
-
+	userID := r.Context().Value(userIDKey).(int)
 	tasks := store.GetAllInf(userID)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "нет токена", http.StatusUnauthorized)
-		return
-	}
-
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	userID, err := ParseJWT(tokenStr)
-	if err != nil {
-		http.Error(w, "невалидный токен", http.StatusUnauthorized)
-		return
-	}
+	userID := r.Context().Value(userIDKey).(int)
 	var newTask storage.Task
 	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -56,20 +30,7 @@ func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "нет токена", http.StatusUnauthorized)
-		return
-	}
-
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	userID, err := ParseJWT(tokenStr)
-	if err != nil {
-		http.Error(w, "невалидный токен", http.StatusUnauthorized)
-		return
-	}
+	userID := r.Context().Value(userIDKey).(int)
 
 	if idStr == "" {
 		w.WriteHeader(http.StatusBadRequest)
@@ -91,19 +52,7 @@ func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id")
-	authHeader := r.Header.Get("Authorization")
-	if authHeader == "" {
-		http.Error(w, "нет токена", http.StatusUnauthorized)
-		return
-	}
-
-	tokenStr := strings.TrimPrefix(authHeader, "Bearer ")
-
-	userID, err := ParseJWT(tokenStr)
-	if err != nil {
-		http.Error(w, "невалидный токен", http.StatusUnauthorized)
-		return
-	}
+	userID := r.Context().Value(userIDKey).(int)
 
 	if idStr == "" {
 		w.WriteHeader(http.StatusBadRequest)
