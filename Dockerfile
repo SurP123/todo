@@ -1,24 +1,24 @@
-FROM golang:latest AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
-RUN go mod download
+RUN apk add --no-cache git
 
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux go build -o main .
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -o main .
 
-FROM fedora:39
+FROM alpine:3.20
 
 WORKDIR /app
 
-RUN dnf install -y sqlite && dnf clean all
+RUN apk add --no-cache ca-certificates
 
 COPY --from=builder /app/main .
 COPY --from=builder /app/templates ./templates
 
-RUN mkdir -p /app/data
+
+RUN chmod -R 755 /app/templates
 
 EXPOSE 8181
 

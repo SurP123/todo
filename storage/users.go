@@ -1,6 +1,11 @@
 package storage
 
-import "database/sql"
+import (
+	"context"
+	"errors"
+
+	"github.com/jackc/pgx/v5"
+)
 
 type User struct {
 	Id    int    `json:"ID"`
@@ -8,37 +13,34 @@ type User struct {
 	Pass  string `json:"pass"`
 }
 
-type UsersStorage struct {
-	db *sql.DB
-}
+type UsersStorage struct{}
 
-func NewUsers(db *sql.DB) *UsersStorage {
-	return &UsersStorage{db: db}
+func NewUsers() *UsersStorage {
+	return &UsersStorage{}
 }
 
 func (s *UsersStorage) AddUser(u User) (int, error) {
-	res, err := s.db.Exec(
-		"INSERT INTO users (login, pass) VALUES (?, ?)",
-		u.Login, u.Pass,
-	)
+	var id int
+	err := Pool.QueryRow(context.Background(),
+		"INSERT INTO users (login, pass) VALUES ($1, $2) RETURNING id",
+		u.Login, u.Pass).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-	id, _ := res.LastInsertId()
-	return int(id), nil
+	return id, nil
 }
 
-func (s *UsersStorage) Find(login string) (User, bool) {
+func (s *UsersStorage) Find(login string) (User, bool, error) {
 	var u User
-	err := s.db.QueryRow(
-		"SELECT id, login, pass FROM users WHERE login = ?", login,
+	err := Pool.QueryRow(context.Background(),
+		"SELECT id, login, pass FROM users WHERE login = $1", login,
 	).Scan(&u.Id, &u.Login, &u.Pass)
 
-	if err == sql.ErrNoRows {
-		return User{}, false
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, false, nil
 	}
 	if err != nil {
-		return User{}, false
+		return User{}, false, err
 	}
-	return u, true
+	return u, true, nil
 }

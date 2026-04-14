@@ -1,18 +1,28 @@
-# база данных
+# Бинарник приложения
+/main
+/todo
+*.exe
+
 *.db
 
-# бинарник
-/todo
 
-# Go
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
+# Файлы конфигурации с секретами
+.env
+.env.local
+*.secret
+
+/vendor/
+
+# Артефакты Go
 *.out
+*.prof
 
-# IDE
+# Логи
+*.log
+
 .idea/
-*.iml
+.vscode/
+*.swp
+*.swo
+
+data/

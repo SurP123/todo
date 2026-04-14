@@ -8,13 +8,12 @@ import (
 )
 
 func main() {
-	db, err := storage.NewDB("todo.db")
-	if err != nil {
+	if err := storage.InitDB(); err != nil {
 		log.Fatal("ошибка подключения к базе:", err)
 	}
-	defer db.Close()
+	defer storage.CloseDB()
 
-	handlers.Init(storage.NewStorage(db), storage.NewUsers(db))
+	handlers.Init(storage.NewStorage(), storage.NewUsers())
 
 	mux := http.NewServeMux()
 

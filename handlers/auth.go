@@ -25,30 +25,36 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, exists := users.Find(req.Username)
+	_, exists, err := users.Find(req.Username)
+	if err != nil {
+		http.Error(w, "ошибка проверки пользователя", http.StatusInternalServerError)
+		return
+	}
 	if exists {
-		http.Error(w, "логин уже занят", http.StatusBadRequest)
+		http.Error(w, "логин уже занят", http.StatusConflict)
 		return
 	}
 
-	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), 10)
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
-		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		http.Error(w, "ошибка хеширования пароля", http.StatusInternalServerError)
 		return
 	}
 
 	id, err := users.AddUser(storage.User{Login: req.Username, Pass: string(hash)})
 	if err != nil {
-		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		http.Error(w, "ошибка создания пользователя", http.StatusInternalServerError)
 		return
 	}
 
 	token, err := CreateJWT(id)
 	if err != nil {
-		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		http.Error(w, "ошибка создания токена", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }
 
@@ -59,13 +65,17 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, exists := users.Find(req.Username)
+	user, exists, err := users.Find(req.Username)
+	if err != nil {
+		http.Error(w, "ошибка поиска пользователя", http.StatusInternalServerError)
+		return
+	}
 	if !exists {
 		http.Error(w, "пользователь не найден", http.StatusUnauthorized)
 		return
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Pass), []byte(req.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Pass), []byte(req.Password))
 	if err != nil {
 		http.Error(w, "неверный пароль", http.StatusUnauthorized)
 		return
@@ -73,9 +83,10 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := CreateJWT(user.Id)
 	if err != nil {
-		http.Error(w, "ошибка сервера", http.StatusInternalServerError)
+		http.Error(w, "ошибка создания токена", http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"token": token})
 }

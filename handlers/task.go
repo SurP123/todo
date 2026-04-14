@@ -9,65 +9,91 @@ import (
 
 func GetTaskHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(userIDKey).(int)
-	tasks := store.GetAllInf(userID)
+
+	tasks, err := store.GetAllInf(userID)
+	if err != nil {
+		http.Error(w, "ошибка получения задач", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(tasks)
 }
 
 func CreateTaskHandler(w http.ResponseWriter, r *http.Request) {
 	userID := r.Context().Value(userIDKey).(int)
+
 	var newTask storage.Task
 	if err := json.NewDecoder(r.Body).Decode(&newTask); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		http.Error(w, "неверный формат запроса", http.StatusBadRequest)
 		return
 	}
+
 	newTask.UserID = userID
-	id := store.Add(newTask)
+
+	id, err := store.Add(newTask)
+	if err != nil {
+		http.Error(w, "ошибка создания задачи", http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(id)
+	json.NewEncoder(w).Encode(map[string]int{"id": id})
 }
 
 func UpdateTaskHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
 	userID := r.Context().Value(userIDKey).(int)
 
+	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "параметр id обязателен", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "неверный формат id", http.StatusBadRequest)
 		return
 	}
 
-	if !store.Update(id, userID) {
+	updated, err := store.Update(id, userID)
+	if err != nil {
+		http.Error(w, "ошибка обновления задачи", http.StatusInternalServerError)
+		return
+	}
+	if !updated {
 		http.Error(w, "задача не найдена", http.StatusNotFound)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
 
 func DeleteTaskHandler(w http.ResponseWriter, r *http.Request) {
-	idStr := r.URL.Query().Get("id")
 	userID := r.Context().Value(userIDKey).(int)
 
+	idStr := r.URL.Query().Get("id")
 	if idStr == "" {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "параметр id обязателен", http.StatusBadRequest)
 		return
 	}
 
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
+		http.Error(w, "неверный формат id", http.StatusBadRequest)
 		return
 	}
 
-	if !store.Delete(id, userID) {
+	deleted, err := store.Delete(id, userID)
+	if err != nil {
+		http.Error(w, "ошибка удаления задачи", http.StatusInternalServerError)
+		return
+	}
+	if !deleted {
 		http.Error(w, "задача не найдена", http.StatusNotFound)
 		return
 	}
+
 	w.WriteHeader(http.StatusOK)
 }
