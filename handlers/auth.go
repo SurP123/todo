@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"todo/storage"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -25,6 +26,21 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(req.Password) < 8 {
+		http.Error(w, "пароль должен содержать 8 символов", http.StatusBadRequest)
+		return
+	}
+	var UpperLetter bool = false
+	for i := 0; i < len(req.Password); i++ {
+		if unicode.IsUpper(rune(req.Password[i])) {
+			UpperLetter = true
+			break
+		}
+	}
+	if !UpperLetter {
+		http.Error(w, "Пароль должен содержать хотя бы одну заглавную букву", http.StatusBadRequest)
+		return
+	}
 	_, exists, err := users.Find(req.Username)
 	if err != nil {
 		http.Error(w, "ошибка проверки пользователя", http.StatusInternalServerError)
